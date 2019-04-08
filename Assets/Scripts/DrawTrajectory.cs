@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(PlanetRigidbody))]
 [RequireComponent(typeof(LineRenderer))]
 public class DrawTrajectory : MonoBehaviour
 {
@@ -11,14 +12,14 @@ public class DrawTrajectory : MonoBehaviour
     [SerializeField] double timestep;
     [SerializeField] int steps;
 
-    [SerializeField] List<Rigidbody> planets;
-
+    PlanetAggregator aggregator;
+    PlanetRigidbody planet;
     LineRenderer trajectory;
-
-    double BigG = 6.674d * 1E-11d;
 
     void Awake()
     {
+        aggregator = GameObject.Find("Planet Aggregator").GetComponent<PlanetAggregator>();
+        planet = GetComponent<PlanetRigidbody>();
         trajectory = GetComponent<LineRenderer>();
     }
 
@@ -34,18 +35,22 @@ public class DrawTrajectory : MonoBehaviour
 
         positions.Add(position.ToVector3());
 
-        Debug.ClearDeveloperConsole();
         for (int i = 0; i < steps; i++)
         {
-            acceleration = ComputeNetGravity(position);
-            Debug.Log(acceleration.magnitude);
-            velocity += acceleration * timestep;
-            position += velocity * timestep;
+            //acceleration = aggregator.ComputeNetGravity(position, planet);
+            PlanetRigidbody.RK4Integrate(ref position, ref velocity, timestep, planet, aggregator);
             positions.Add(position.ToVector3());
         }
 
         trajectory.positionCount = positions.Count;
         trajectory.SetPositions(positions.ToArray());
+    }
+
+    [ContextMenu("Set Parameters")]
+    void SetRigidbodyParameters()
+    {
+        planet.mass = mass;
+        planet.velocity = (new Vector3d(transform.forward)) * speed;
     }
 
     void OnDrawGizmos()
@@ -55,24 +60,5 @@ public class DrawTrajectory : MonoBehaviour
         Gizmos.DrawSphere(transform.position, 0.25f);
     }
 
-    Vector3d ComputeNetGravity(Vector3d pos)
-    {
-        Vector3d net = Vector3d.zero;
-        for (int i = 0; i < planets.Count; i++)
-        {
-            net += ComputeGravityForce(pos, planets[i]);
-        }
-        return net;
-    }
 
-    Vector3d ComputeGravityForce(Vector3d pos, Rigidbody body)
-    {
-        Vector3d body_pos = new Vector3d(
-            (double)body.transform.position.x,
-            (double)body.transform.position.y,
-            (double)body.transform.position.z
-        );
-        double a = (double)body.mass / (Vector3d.SqrDistance(pos, body_pos));
-        return (body_pos - pos).normalized * a;
-    }
 }

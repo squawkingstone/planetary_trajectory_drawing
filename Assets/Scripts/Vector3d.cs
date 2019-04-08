@@ -19,6 +19,14 @@ public class Vector3d
         }
     }
 
+    public static double MIN_DOUBLE
+    {
+        get
+        {
+            return 9.99999974737875E-06;
+        }
+    }
+
     /* ------------------------------------------------------------ */
     /* INSTANCE PROPERTIES */
     /* ------------------------------------------------------------ */
@@ -123,7 +131,7 @@ public class Vector3d
     private static Vector3d Normalize(Vector3d v)
     {
         double mag = v.magnitude;
-        if (mag > 9.99999974737875E-06)
+        if (mag > Vector3d.MIN_DOUBLE)
         {
             return v / mag;
         }
@@ -140,5 +148,10 @@ public class Vector3d
     public Vector3 ToVector3()
     {
         return new Vector3((float)x, (float)y, (float)z);
+    }
+
+    public string ToString()
+    {
+        return x + ", " + y + ", " + z;
     }
 }
